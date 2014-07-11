@@ -38,7 +38,7 @@ s.reticulate( { distancePerStep: .1 });</pre></code>
 <pre><code>s.calculateDistances();
 s.reticulate( { steps: 500 } );</pre></code>
 
-<pre><code>s.lPoints</code></pre> contains the evenly separated points. Use them to create a line, a mesh or a camera path:
+<code>s.lPoints</code> contains the evenly separated points. Use them to create a line, a mesh or a camera path:
 
 <pre><code>var geometry = new THREE.Geometry();
    
