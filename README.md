@@ -42,7 +42,7 @@ s.reticulate( { steps: 500 } );</pre></code>
 
 <pre><code>var geometry = new THREE.Geometry();
    
-for( var j = 0; j < s.lPoints.length - 1; j++ ) {
+for( var j = 0; j &lt; s.lPoints.length - 1; j++ ) {
 
 	var from = s.lPoints[ j ],
 		to = s.lPoints[ j + 1 ];
