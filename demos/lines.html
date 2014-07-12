@@ -1,15 +1,22 @@
 <!doctype html>
 <html lang="en">
 	<head>
-		<title>IBL Test - World Cup</title>
+		<title>THREE.ConstantSpline.js Demo - Lines</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-
-<style>
-body{ background-color: black; overflow: hidden;}
-</style>
-</head>
-
+        <link href='http://fonts.googleapis.com/css?family=Roboto+Condensed:400,700,300' rel='stylesheet' type='text/css'>
+		<style>
+			*{ box-sizing: border-box; margin: 0; padding: 0;}
+			body{ background-color: black; overflow: hidden;}
+			div{ font-family: 'Roboto condensed', sans-serif; color: #fff; font-weight: 100; font-size: 13px; position: absolute; left: 20px; top: 20px;}
+		</style>
+	</head>
+<body>
+<div>
+	<p><b>THREE.ConstantSpline.js demo - Lines</b></p>
+	<p>Click space or touch the screen to add more lines</p>
+</div>
+</body>
 <script src="js/Three.js"></script>
 <script src="js/THREE.ConstantSpline.js"></script>
 	
@@ -63,42 +70,6 @@ function init() {
 	render();
 	
 	createLine();
-	//createSurface();
-
-}
-
-function updateLine() {
-
-	/*var g = new THREE.Geometry();
-	for( var j = 0; j <  lines.length; j++ ) {
-		var l = lines[ j ];
-		THREE.GeometryUtils.merge( g, l.geometry );
-	}
-	if( line ) scene.remove( line );
-
-	line = new THREE.Line( g, material, THREE.LinePieces );
-	scene.add( line );*/
-
-	if( line ) scene.remove( line );
-
-	var geometry = new THREE.Geometry();
-	for( var j = 0; j < dots.length; j++ ) {
-		geometry.vertices.push( dots[ j ].clone() );
-	}
-	line = new THREE.ParticleSystem( geometry, dotMaterial );
-	scene.add( line );
-	return line;
-}
-
-function drawLine( from, to, color ) {
-
-    var geometry = new THREE.Geometry();
-    geometry.vertices.push( from.clone() );
-    geometry.vertices.push( to.clone() );
-
-    var line = new THREE.Line( geometry, material );
-
-    return line;
 
 }
 
@@ -166,122 +137,15 @@ function createLine() {
 
     points = points.concat( s.lPoints );
 
-    for( var j = 0; j < s.lPoints.length; j++ ) {
+    /*for( var j = 0; j < s.lPoints.length; j++ ) {
 	
-		//addDot( s.lPoints[ j ], 1 )
+		addDot( s.lPoints[ j ], 1 )
 
 	}
 
-	//addDot( s.p3, 5 );
+	addDot( s.p3, 5 );*/
 
 	origin.copy( s.p3 );
-
-}
-
-function createSurface() {
-
-	if( mesh ) {
-		scene.remove( mesh );
-		mesh = null;
-	}
-
-	var p10, p11, p12, p13,
-		p20, p21, p22, p23;
-
-	p10 = new THREE.Vector3( .5 - Math.random(), .5 - Math.random(), .5 - Math.random() );
-	p11 = new THREE.Vector3( .5 - Math.random(), .5 - Math.random(), .5 - Math.random() );
-	p12 = new THREE.Vector3( .5 - Math.random(), .5 - Math.random(), .5 - Math.random() );
-	p13 = new THREE.Vector3( .5 - Math.random(), .5 - Math.random(), .5 - Math.random() );
-
-	p10.multiplyScalar( 10 + Math.random() * 50 );
-	p11.multiplyScalar( 10 + Math.random() * 50 );
-	p12.multiplyScalar( 10 + Math.random() * 50 );
-	p13.multiplyScalar( 10 + Math.random() * 50 );
-
-	p20 = new THREE.Vector3( .5 - Math.random(), .5 - Math.random(), .5 - Math.random() );
-	p21 = new THREE.Vector3( .5 - Math.random(), .5 - Math.random(), .5 - Math.random() );
-	p22 = new THREE.Vector3( .5 - Math.random(), .5 - Math.random(), .5 - Math.random() );
-	p23 = new THREE.Vector3( .5 - Math.random(), .5 - Math.random(), .5 - Math.random() );
-
-	p20.multiplyScalar( 10 + Math.random() * 50 );
-	p21.multiplyScalar( 10 + Math.random() * 50 );
-	p22.multiplyScalar( 10 + Math.random() * 50 );
-	p23.multiplyScalar( 10 + Math.random() * 50 );
-
-	var tmp = new THREE.Vector3();
-
-	var steps = 10, segments = 50;
-
-	var planeGeometry = new THREE.PlaneGeometry( 50, 50, steps, segments + 1);
-
-	for( var i = 0; i < steps; i++ ) {
-
-		var t = i / steps;
-
-		s.p0.copy( p10 );
-		s.p0.multiplyScalar( 1 - t );
-		tmp.copy( p20 );
-		tmp.multiplyScalar( t );
-		s.p0.add( tmp );
-
-		s.p1.copy( p11 );
-		s.p1.multiplyScalar( 1 - t );
-		tmp.copy( p21 );
-		tmp.multiplyScalar( t );
-		s.p1.add( tmp );
-		
-		s.p2.copy( p12 );
-		s.p2.multiplyScalar( 1 - t );
-		tmp.copy( p22 );
-		tmp.multiplyScalar( t );
-		s.p2.add( tmp );
-		
-		s.p3.copy( p13 );
-		s.p3.multiplyScalar( 1 - t );
-		tmp.copy( p23 );
-		tmp.multiplyScalar( t );
-		s.p3.add( tmp );
-		
-		s.p0.x = s.p1.x = s.p2.x = s.p3.x = ( i - .5 * segments ) * 20 / segments;
-
-		s.numSteps = segments - 1; 
-		s.calculate();
-		s.reticulate( { steps: segments });
-
-		var geometry = new THREE.Geometry();
-	    
-	    var line = new THREE.Line( geometry, material );
-
-		for( var j = 0; j < s.lPoints.length - 1; j++ ) {
-		
-			var from = s.lPoints[ j ],
-				to = s.lPoints[ j + 1 ];
-			geometry.vertices.push( from.clone() );
-		    geometry.vertices.push( to.clone() );
-
-		}
-
-	    var line = new THREE.Line( geometry, material );
-	    scene.add( line );
-
-	    for( var j = 0; j < s.lPoints.length; j++ ) {
-	    	planeGeometry.vertices[ i * segments + j ].copy( s.lPoints[ j ] );
-	    }
-
-	}
-
-	planeGeometry.computeFaceNormals();
-	planeGeometry.computeVertexNormals();
-
-	mesh = new THREE.Mesh( 
-		planeGeometry, 
-		new THREE.MeshNormalMaterial( { 
-			side: THREE.DoubleSide, 
-			wireframe: false, 
-			shading: THREE.FlatShading 
-		} ) 
-	);
-	scene.add( mesh );
 
 }
 
@@ -295,7 +159,6 @@ window.addEventListener( 'keydown', function( e ) {
 
 	if( e.keyCode == 32 ) {
 		createLine();
-		//createSurface();
 	}
 
 } );
