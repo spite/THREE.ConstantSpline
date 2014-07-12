@@ -6,7 +6,7 @@ This object creates a B-Spline using 4 points, and a number steps or a fixed ste
 ![Image](https://raw.githubusercontent.com/spite/THREE.ConstantSpline/master/snapshot.png)
 
 Demos are here: 
-* [Lines](http://www.clicktorelease.com/tmp/threejs/constant-spline/)
+* [Lines](http://www.clicktorelease.com/tmp/threejs/constant-spline/lines.html)
 * [Surfaces](http://www.clicktorelease.com/tmp/threejs/constant-spline/surface.html)
 
 
