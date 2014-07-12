@@ -93,8 +93,6 @@ var oDist = 0, oFov;
 
 function onTouchStart( event ) {
 
-	uiElements.forEach( function( e ) { e.classList.add( 'hidden' ); } );
-
 	event.preventDefault();
 
 	if( event.touches.length == 2 ) {
@@ -144,8 +142,6 @@ function onTouchMove( event ) {
 }
 
 function onTouchEnd( event ) {
-
-	uiElements.forEach( function( e ) { e.classList.remove( 'hidden' ); } );
 
 	isUserInteracting = false;
 	isUserPinching = false;
