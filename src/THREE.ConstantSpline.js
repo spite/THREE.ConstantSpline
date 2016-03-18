@@ -91,7 +91,7 @@ THREE.ConstantSpline.prototype.calculateDistances = function() {
 THREE.ConstantSpline.prototype.reticulate = function( settings ) {
 
 	if( this.distancesNeedUpdate ) {
-		s.calculateDistances();
+		this.calculateDistances();
 		this.distancesNeedUpdate = false;
 	}
 
