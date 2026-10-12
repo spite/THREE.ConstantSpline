@@ -201,14 +201,19 @@ function removeOldLines() {
 }
 
 var easing = .1;
-var t = 0;
+var t = 0, lastTime = 0;
 function render() {
 
 	requestAnimationFrame( render );
+
+	// frames elapsed at 60fps, so the pace is the same at any refresh rate
+	var time = performance.now();
+	var frames = lastTime ? Math.min( ( time - lastTime ) * 60 / 1000, 4 ) : 1;
+	lastTime = time;
 	
 	if( points.length ) {
 		
-		t += 100;
+		t += 100 * frames;
 
 		if( ( t / speed ) >= points.length - 1 ) {
 			createLine();
@@ -222,14 +227,14 @@ function render() {
 		camPoint.y += 10;
 		tmpPoint.copy( camPoint );
 		tmpPoint.sub( camera.position );
-		tmpPoint.multiplyScalar( .01 );
+		tmpPoint.multiplyScalar( 1 - Math.pow( .99, frames ) );
 		tmpPoint.add( camera.position )
 		camera.position.copy( tmpPoint );
 
 		tmpPoint.copy( samplePoints( now ) );
 		pointer.position.copy( tmpPoint );
 		tmpPoint.sub( camera.target );
-		tmpPoint.multiplyScalar( .1 );
+		tmpPoint.multiplyScalar( 1 - Math.pow( .9, frames ) );
 		tmpPoint.add( camera.target )
 		camera.target.copy( tmpPoint );
 
