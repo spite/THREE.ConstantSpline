@@ -4,7 +4,7 @@
 		<title>THREE.ConstantSpline.js Demo - Lines</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-        <link href='http://fonts.googleapis.com/css?family=Roboto+Condensed:400,700,300' rel='stylesheet' type='text/css'>
+        <link href='https://fonts.googleapis.com/css?family=Roboto+Condensed:400,700,300' rel='stylesheet' type='text/css'>
 		<style>
 			*{ box-sizing: border-box; margin: 0; padding: 0;}
 			body{ background-color: black; overflow: hidden;}
@@ -18,7 +18,7 @@
 </div>
 </body>
 <script src="js/Three.js"></script>
-<script src="js/THREE.ConstantSpline.js"></script>
+<script src="../src/THREE.ConstantSpline.js"></script>
 	
 <script>
 
@@ -133,7 +133,9 @@ function createLine() {
     } );
 
     var line = new THREE.Line( geometry, material );
+    line.pointCount = s.lPoints.length;
     scene.add( line );
+    lines.push( line );
 
     points = points.concat( s.lPoints );
 
@@ -166,6 +168,8 @@ window.addEventListener( 'keydown', function( e ) {
 var tmpPoint = new THREE.Vector3();
 var camPoint = new THREE.Vector3();
 var speed = 50;
+var lag = 2000;
+var maxLines = 200;
 
 function samplePoints( time ) {
 
@@ -181,6 +185,21 @@ function samplePoints( time ) {
 	return tmpPoint;
 }
 
+function removeOldLines() {
+
+	// only lines the camera has already passed
+	while( lines.length > maxLines && lines[ 0 ].pointCount * speed <= t - lag ) {
+
+		var line = lines.shift();
+		scene.remove( line );
+		line.geometry.dispose();
+		points.splice( 0, line.pointCount );
+		t -= line.pointCount * speed;
+
+	}
+
+}
+
 var easing = .1;
 var t = 0;
 function render() {
@@ -190,13 +209,16 @@ function render() {
 	if( points.length ) {
 		
 		t += 100;
-		var now = t;//Date.now();
 
-		if( ( t / speed ) > points.length - 1 ) {
+		if( ( t / speed ) >= points.length - 1 ) {
 			createLine();
 		}
+
+		removeOldLines();
+
+		var now = t;//Date.now();
 				
-		camPoint.copy( samplePoints( now - 2000 ) );
+		camPoint.copy( samplePoints( Math.max( 0, now - lag ) ) );
 		camPoint.y += 10;
 		tmpPoint.copy( camPoint );
 		tmpPoint.sub( camera.position );

@@ -83,38 +83,33 @@ THREE.ConstantSpline.prototype.calculateDistances = function() {
 
 	}
 
-	this.points[ this.points.length - 1 ].distance = 0;
+	this.points[ this.points.length - 1 ].distance = td;
 	this.points[ this.points.length - 1 ].ac = this.d;
 
-}
+	this.distancesNeedUpdate = false;
+
+};
 
 THREE.ConstantSpline.prototype.reticulate = function( settings ) {
 
 	if( this.distancesNeedUpdate ) {
 		this.calculateDistances();
-		this.distancesNeedUpdate = false;
 	}
 
 	this.lPoints = [];
 
-	var l = [];
-
 	var steps, distancePerStep;
 
-	if( settings.steps) {
+	if( settings.distancePerStep ) {
+		distancePerStep = settings.distancePerStep;
+	} else if( settings.steps ) {
 		steps = settings.steps;
 		distancePerStep = this.d / steps;
 	}
 
-	if( settings.distancePerStep ) {
-		distancePerStep = settings.distancePerStep;
-		steps = this.d / distancePerStep;		
-	}
+	var d = 0, j;
 
-	var d = 0,
-		p = 0;
-
-	this.lPoints = [];
+	var end = this.points[ this.points.length - 1 ];
 
 	var current = new THREE.Vector3();
 	current.copy( this.points[ 0 ].clone() );
@@ -137,16 +132,43 @@ THREE.ConstantSpline.prototype.reticulate = function( settings ) {
 		return d;
 	}
 
-	for( var j = 0; j < this.points.length; j++ ) {
+	if( steps ) {
 
-		if( this.points[ j ].ac - d > distancePerStep ) {
-			
-			d += splitSegment( current, this.points[ j ], this.lPoints );
+		// steps + 1 points, evenly spaced along the sampled curve
+		var from, to, at;
+
+		for( j = 1; j < this.points.length; j++ ) {
+
+			from = this.points[ j - 1 ];
+			to = this.points[ j ];
+
+			while( this.lPoints.length < steps && to.ac >= this.lPoints.length * distancePerStep ) {
+
+				at = this.lPoints.length * distancePerStep;
+				this.lPoints.push( from.clone().lerp( to, to.ac > from.ac ? ( at - from.ac ) / ( to.ac - from.ac ) : 0 ) );
+
+			}
 
 		}
 
+	} else {
+
+		for( j = 0; j < this.points.length; j++ ) {
+
+			if( this.points[ j ].ac - d > distancePerStep ) {
+
+				d += splitSegment( current, this.points[ j ], this.lPoints );
+
+			}
+
+		}
+
+		// drop a last step that landed on the end point
+		if( this.lPoints.length > 1 && current.distanceTo( end ) < distancePerStep * 1e-6 ) this.lPoints.pop();
+
 	}
-	this.lPoints.push( this.points[ this.points.length - 1 ].clone() );
+
+	this.lPoints.push( end.clone() );
 
 
 };

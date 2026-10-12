@@ -1,10 +1,10 @@
 <!doctype html>
 <html lang="en">
 	<head>
-		<title>THREE.ConstantSpline.js Demo - Lines</title>
+		<title>THREE.ConstantSpline.js Demo - Surfaces</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-        <link href='http://fonts.googleapis.com/css?family=Roboto+Condensed:400,700,300' rel='stylesheet' type='text/css'>
+        <link href='https://fonts.googleapis.com/css?family=Roboto+Condensed:400,700,300' rel='stylesheet' type='text/css'>
 		<style>
 			*{ box-sizing: border-box; margin: 0; padding: 0;}
 			body{ background-color: black; overflow: hidden;}
@@ -14,11 +14,11 @@
 <body>
 <div>
 	<p><b>THREE.ConstantSpline.js demo - Surfaces</b></p>
-	<p>Click space or touch the screen to create a new surface | click or touch and drag to rotate</p>
+	<p>Click space or tap the screen to create a new surface | click or touch and drag to rotate</p>
 </div>
 </body>
 <script src="js/Three.js"></script>
-<script src="js/THREE.ConstantSpline.js"></script>
+<script src="../src/THREE.ConstantSpline.js"></script>
 	
 <script>
 
@@ -92,13 +92,15 @@ function createSurface() {
 
 	if( mesh ) {
 		scene.remove( mesh );
+		mesh.geometry.dispose();
 		mesh = null;
 	}
 
 	lines.forEach( function( l ) {
 		scene.remove( l );
-		l = null;
+		l.geometry.dispose();
 	} );
+	lines = [];
 
 	var p10, p11, p12, p13,
 		p20, p21, p22, p23;
@@ -210,9 +212,26 @@ function createSurface() {
 
 }
 
+var isTap = false, tapX, tapY;
+
 window.addEventListener( 'touchstart', function( e ) {
 
-	createSurface();
+	isTap = e.touches.length == 1;
+	tapX = e.touches[ 0 ].clientX;
+	tapY = e.touches[ 0 ].clientY;
+
+} );
+
+window.addEventListener( 'touchmove', function( e ) {
+
+	if( Math.abs( e.touches[ 0 ].clientX - tapX ) > 10 || Math.abs( e.touches[ 0 ].clientY - tapY ) > 10 ) isTap = false;
+
+} );
+
+window.addEventListener( 'touchend', function( e ) {
+
+	if( isTap ) createSurface();
+	isTap = false;
 
 } );
 

@@ -1,13 +1,13 @@
 THREE.ConstantSpline.js
 =========================
 
-This object creates a B-Spline using 4 points, and a number steps or a fixed step distance can be specified to create a set of points that cover the curve at constant rate.
+This object creates a cubic Bézier curve using 4 points, and a number of steps or a fixed step distance can be specified to create a set of points that cover the curve at constant rate.
 
 ![Image](https://raw.githubusercontent.com/spite/THREE.ConstantSpline/master/snapshot.png)
 
 Demos are here: 
-* [Lines](http://www.clicktorelease.com/tmp/threejs/constant-spline/lines.html)
-* [Surfaces](http://www.clicktorelease.com/tmp/threejs/constant-spline/surface.html)
+* [Lines](https://spite.github.io/THREE.ConstantSpline/demos/lines.html)
+* [Surfaces](https://spite.github.io/THREE.ConstantSpline/demos/surface.html)
 
 
 How to use
@@ -24,19 +24,19 @@ assign the 4 control points:
 <pre><code>s.p0 = new THREE.Vector3( .5 - Math.random(), .5 - Math.random(), .5 - Math.random() );
 s.p1 = new THREE.Vector3( .5 - Math.random(), .5 - Math.random(), .5 - Math.random() );
 s.p2 = new THREE.Vector3( .5 - Math.random(), .5 - Math.random(), .5 - Math.random() );
-s.p3 = new THREE.Vector3( .5 - Math.random(), .5 - Math.random(), .5 - Math.random() );</pre></code>
+s.p3 = new THREE.Vector3( .5 - Math.random(), .5 - Math.random(), .5 - Math.random() );</code></pre>
 
-make the calculations of the standard b-spline:
+make the calculations of the standard Bézier curve:
 
-<pre><code>s.calculate();</pre></code>
+<pre><code>s.calculate();</code></pre>
 
 specify if you need a constant number of steps or a constant step size:
 
 <pre><code>s.calculateDistances();
-s.reticulate( { distancePerStep: .1 });</pre></code>
+s.reticulate( { distancePerStep: .1 });</code></pre>
 
 <pre><code>s.calculateDistances();
-s.reticulate( { steps: 500 } );</pre></code>
+s.reticulate( { steps: 500 } );</code></pre>
 
 <code>s.lPoints</code> contains the evenly separated points. Use them to create a line, a mesh or a camera path:
 
