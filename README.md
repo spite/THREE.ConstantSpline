@@ -94,6 +94,6 @@ License
 
 MIT licensed
 
-Copyright (C) 2014 Jaume Sanchez Elias http://twitter.com/thespite
+Copyright (C) 2014 Jaume Sanchez Elias https://twitter.com/thespite
 
-http://www.clicktorelease.com
+https://www.clicktorelease.com
