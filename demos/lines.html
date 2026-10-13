@@ -4,195 +4,126 @@
 		<title>THREE.ConstantSpline.js Demo - Lines</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-        <link href='https://fonts.googleapis.com/css?family=Roboto+Condensed:400,700,300' rel='stylesheet' type='text/css'>
+		<link href="https://fonts.googleapis.com/css?family=Roboto+Condensed:400,700,300" rel="stylesheet" type="text/css">
 		<style>
 			*{ box-sizing: border-box; margin: 0; padding: 0;}
 			body{ background-color: black; overflow: hidden;}
+			canvas{ display: block; }
 			div{ font-family: 'Roboto condensed', sans-serif; color: #fff; font-weight: 100; font-size: 13px; position: absolute; left: 20px; top: 20px;}
+			a{ color: inherit; }
 		</style>
+		<script type="importmap">
+		{
+			"imports": {
+				"three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js",
+				"three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/"
+			}
+		}
+		</script>
 	</head>
 <body>
 <div>
 	<p><b>THREE.ConstantSpline.js demo - Lines</b></p>
 	<p>Click space or touch the screen to add more lines</p>
+	<p><a href="surface.html">Surfaces</a> | <a href="https://github.com/spite/THREE.ConstantSpline">GitHub</a></p>
 </div>
-</body>
-<script src="js/Three.js"></script>
-<script src="../src/THREE.ConstantSpline.js"></script>
-	
-<script>
+<script type="module">
+import * as THREE from 'three';
+import { ConstantSpline } from '../src/THREE.ConstantSpline.js';
 
-'use strict';
+const scene = new THREE.Scene();
+scene.fog = new THREE.Fog( 0, 0, 100 );
 
-var renderer, scene, camera, ball,
-container, mesh = null,
-material, dotMaterial;
+const camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, .01, 100 );
+camera.position.z = 20;
+const target = new THREE.Vector3();
 
-window.addEventListener( 'load', init );
+const renderer = new THREE.WebGLRenderer( { antialias: true } );
+renderer.setPixelRatio( window.devicePixelRatio );
+renderer.setSize( window.innerWidth, window.innerHeight );
+document.body.appendChild( renderer.domElement );
 
-var line;
-var lines = [];
-var dots = [];
-var points = [];
+const pointer = new THREE.Mesh( new THREE.IcosahedronGeometry( 0.1, 2 ), new THREE.MeshBasicMaterial( { color: 0xffffff } ) );
+pointer.scale.setScalar( 4 );
+scene.add( pointer );
 
-var s = new THREE.ConstantSpline(),
-	pointer;
+const s = new ConstantSpline();
+const origin = new THREE.Vector3( 0, 0, 0 );
+const random = () => new THREE.Vector3( .5 - Math.random(), .5 - Math.random(), .5 - Math.random() ).multiplyScalar( 10 + Math.random() * 50 );
 
-function init() {
-	
-	scene = new THREE.Scene();
+let lines = [];
+let points = [];
 
-	camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, .01, 100 );
-	camera.position.z = 20;
-	camera.target = new THREE.Vector3();
-
-	scene.fog = new THREE.Fog( 0, 0, 100 );
-
-	scene.add( camera );
-
-	renderer = new THREE.WebGLRenderer( { antialias: true } );
-	renderer.setSize( window.innerWidth, window.innerHeight );
-
-	container = renderer.domElement;
-	document.body.appendChild( container );
-
-	material = new THREE.LineBasicMaterial( { color: 0xffffff, linewidth: 4, opacity: .8, transparent: true, blending: THREE.AdditiveBlending } );
-	dotMaterial = new THREE.MeshBasicMaterial( { 
-		color: 0xffffff
-	} );
-	
-	var s = 4;
-	var geometry = new THREE.IcosahedronGeometry( 0.1, 2 );
-	pointer = new THREE.Mesh( geometry, dotMaterial );
-	pointer.scale.set( s, s, s );
-	scene.add( pointer );
-
-	render();
-	
-	createLine();
-
-}
-
-function addDot( p, s ) {
-
-	if( s === undefined ) s = 1;
-
-	var geometry = new THREE.IcosahedronGeometry( 0.1, 2 );
-	var mesh = new THREE.Mesh( geometry, dotMaterial );
-	mesh.position.copy( p );
-	mesh.scale.set( s, s, s );
-	scene.add( mesh );
-
-	return mesh;
-
-	dots.push( p.clone() );
-
-
-}
-
-var origin = new THREE.Vector3( 0 ,0 , 0 );
-
+// a curve that starts where the last one ended, as points that are .1 apart
 function createLine() {
 
 	s.inc = .001;
 
-	s.p0 = new THREE.Vector3( .5 - Math.random(), .5 - Math.random(), .5 - Math.random() );
-	s.p1 = new THREE.Vector3( .5 - Math.random(), .5 - Math.random(), .5 - Math.random() );
-	s.p2 = new THREE.Vector3( .5 - Math.random(), .5 - Math.random(), .5 - Math.random() );
-	s.p3 = new THREE.Vector3( .5 - Math.random(), .5 - Math.random(), .5 - Math.random() );
-
-	s.p0.multiplyScalar( 10 + Math.random() * 50 );
-	s.p1.multiplyScalar( 10 + Math.random() * 50 );
-	s.p2.multiplyScalar( 10 + Math.random() * 50 );
-	s.p3.multiplyScalar( 10 + Math.random() * 50 );
-
 	s.p0.copy( origin );
+	s.p1 = random();
+	s.p2 = random();
+	s.p3 = random();
 
 	s.calculate();
+	s.reticulate( { distancePerStep: .1 } );
 
-	var geometry = new THREE.Geometry();
+	const material = new THREE.LineBasicMaterial( { color: Math.floor( 0x404040 + Math.random() * 0xbfbfbf ) } );
 
-	s.calculateDistances();
-	s.reticulate( { distancePerStep: .1 });
-	//s.reticulate( { steps: 500 } );
+	const line = new THREE.Line( new THREE.BufferGeometry().setFromPoints( s.lPoints ), material );
+	line.pointCount = s.lPoints.length;
+	scene.add( line );
+	lines.push( line );
 
- 	var geometry = new THREE.Geometry();
-   
-	for( var j = 0; j < s.lPoints.length - 1; j++ ) {
-	
-		var from = s.lPoints[ j ],
-			to = s.lPoints[ j + 1 ];
-		geometry.vertices.push( from.clone() );
-	    geometry.vertices.push( to.clone() );
-
-	}
-
-    material = new THREE.LineBasicMaterial( { 
-    	color: 0x404040 + Math.random() * 0xbfbfbf, 
-    	linewidth: 4
-    } );
-
-    var line = new THREE.Line( geometry, material );
-    line.pointCount = s.lPoints.length;
-    scene.add( line );
-    lines.push( line );
-
-    points = points.concat( s.lPoints );
-
-    /*for( var j = 0; j < s.lPoints.length; j++ ) {
-	
-		addDot( s.lPoints[ j ], 1 )
-
-	}
-
-	addDot( s.p3, 5 );*/
+	points = points.concat( s.lPoints );
 
 	origin.copy( s.p3 );
 
 }
 
-window.addEventListener( 'touchstart', function( e ) {
+window.addEventListener( 'touchstart', createLine );
 
-	createLine();
+window.addEventListener( 'keydown', function ( e ) {
 
-} );
-
-window.addEventListener( 'keydown', function( e ) {
-
-	if( e.keyCode == 32 ) {
-		createLine();
-	}
+	if ( e.code === 'Space' ) createLine();
 
 } );
 
-var tmpPoint = new THREE.Vector3();
-var camPoint = new THREE.Vector3();
-var speed = 50;
-var lag = 2000;
-var maxLines = 200;
+window.addEventListener( 'resize', function () {
 
+	renderer.setSize( window.innerWidth, window.innerHeight );
+	camera.aspect = window.innerWidth / window.innerHeight;
+	camera.updateProjectionMatrix();
+
+} );
+
+const tmpPoint = new THREE.Vector3();
+const camPoint = new THREE.Vector3();
+const speed = 50;
+const lag = 2000;
+const maxLines = 200;
+
+// the points are at a constant distance, so going through them at a constant rate is a constant speed
 function samplePoints( time ) {
 
-	var t = Math.floor( time / speed );
-	var f = ( time % speed ) / speed;
+	let t = Math.floor( time / speed );
+	const f = ( time % speed ) / speed;
 	t %= points.length - 1;
 
-	tmpPoint.copy( points[ t + 1 ] );
-	tmpPoint.sub( points[ t ] );
-	tmpPoint.multiplyScalar( f );
-	tmpPoint.add( points[ t ] );
+	return tmpPoint.copy( points[ t ] ).lerp( points[ t + 1 ], f );
 
-	return tmpPoint;
 }
+
+let t = 0, lastTime = 0;
 
 function removeOldLines() {
 
 	// only lines the camera has already passed
-	while( lines.length > maxLines && lines[ 0 ].pointCount * speed <= t - lag ) {
+	while ( lines.length > maxLines && lines[ 0 ].pointCount * speed <= t - lag ) {
 
-		var line = lines.shift();
+		const line = lines.shift();
 		scene.remove( line );
 		line.geometry.dispose();
+		line.material.dispose();
 		points.splice( 0, line.pointCount );
 		t -= line.pointCount * speed;
 
@@ -200,58 +131,37 @@ function removeOldLines() {
 
 }
 
-var easing = .1;
-var t = 0, lastTime = 0;
 function render() {
 
 	requestAnimationFrame( render );
 
 	// frames elapsed at 60fps, so the pace is the same at any refresh rate
-	var time = performance.now();
-	var frames = lastTime ? Math.min( ( time - lastTime ) * 60 / 1000, 4 ) : 1;
+	const time = performance.now();
+	const frames = lastTime ? Math.min( ( time - lastTime ) * 60 / 1000, 4 ) : 1;
 	lastTime = time;
-	
-	if( points.length ) {
-		
-		t += 100 * frames;
 
-		if( ( t / speed ) >= points.length - 1 ) {
-			createLine();
-		}
+	t += 100 * frames;
 
-		removeOldLines();
+	if ( ( t / speed ) >= points.length - 1 ) createLine();
 
-		var now = t;//Date.now();
-				
-		camPoint.copy( samplePoints( Math.max( 0, now - lag ) ) );
-		camPoint.y += 10;
-		tmpPoint.copy( camPoint );
-		tmpPoint.sub( camera.position );
-		tmpPoint.multiplyScalar( 1 - Math.pow( .99, frames ) );
-		tmpPoint.add( camera.position )
-		camera.position.copy( tmpPoint );
+	removeOldLines();
 
-		tmpPoint.copy( samplePoints( now ) );
-		pointer.position.copy( tmpPoint );
-		tmpPoint.sub( camera.target );
-		tmpPoint.multiplyScalar( 1 - Math.pow( .9, frames ) );
-		tmpPoint.add( camera.target )
-		camera.target.copy( tmpPoint );
+	camPoint.copy( samplePoints( Math.max( 0, t - lag ) ) );
+	camPoint.y += 10;
+	camera.position.lerp( camPoint, 1 - Math.pow( .99, frames ) );
 
-		camera.lookAt( camera.target );
+	pointer.position.copy( samplePoints( t ) );
+	target.lerp( pointer.position, 1 - Math.pow( .9, frames ) );
 
-		camera.rotation.z += .1;
-	}
+	camera.lookAt( target );
+	camera.rotation.z += .1;
 
 	renderer.render( scene, camera );
 
 }
 
-function updateCamera() {
-
-	if( !isInit ) initEvents();
-
-}
-
+createLine();
+render();
 </script>
-<script src="js/scripts.js"></script>
+</body>
+</html>

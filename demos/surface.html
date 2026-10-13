@@ -4,277 +4,164 @@
 		<title>THREE.ConstantSpline.js Demo - Surfaces</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-        <link href='https://fonts.googleapis.com/css?family=Roboto+Condensed:400,700,300' rel='stylesheet' type='text/css'>
+		<link href="https://fonts.googleapis.com/css?family=Roboto+Condensed:400,700,300" rel="stylesheet" type="text/css">
 		<style>
 			*{ box-sizing: border-box; margin: 0; padding: 0;}
 			body{ background-color: black; overflow: hidden;}
+			canvas{ display: block; }
 			div{ font-family: 'Roboto condensed', sans-serif; color: #fff; font-weight: 100; font-size: 13px; position: absolute; left: 20px; top: 20px;}
+			a{ color: inherit; }
 		</style>
+		<script type="importmap">
+		{
+			"imports": {
+				"three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js",
+				"three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/"
+			}
+		}
+		</script>
 	</head>
 <body>
 <div>
 	<p><b>THREE.ConstantSpline.js demo - Surfaces</b></p>
 	<p>Click space or tap the screen to create a new surface | click or touch and drag to rotate</p>
+	<p><a href="lines.html">Lines</a> | <a href="https://github.com/spite/THREE.ConstantSpline">GitHub</a></p>
 </div>
-</body>
-<script src="js/Three.js"></script>
-<script src="../src/THREE.ConstantSpline.js"></script>
-	
-<script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { ConstantSpline } from '../src/THREE.ConstantSpline.js';
 
-'use strict';
+const scene = new THREE.Scene();
+scene.fog = new THREE.Fog( 0, 0, 100 );
 
-var renderer, scene, camera, ball,
-container, mesh = null,
-material, dotMaterial, lineMaterial;
+const camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, .01, 200 );
+camera.position.setFromSphericalCoords( 35, THREE.MathUtils.degToRad( 73 ), THREE.MathUtils.degToRad( - 20 ) );
 
-window.addEventListener( 'load', init );
+const renderer = new THREE.WebGLRenderer( { antialias: true } );
+renderer.setPixelRatio( window.devicePixelRatio );
+renderer.setSize( window.innerWidth, window.innerHeight );
+document.body.appendChild( renderer.domElement );
 
-var line;
-var lines = [];
-var dots = [];
-var points = [];
+const controls = new OrbitControls( camera, renderer.domElement );
+controls.enableDamping = true;
+controls.enablePan = false;
+controls.minDistance = 10;
+controls.maxDistance = 100;
 
-var s = new THREE.ConstantSpline();
+const lineMaterial = new THREE.LineBasicMaterial( { color: 0xffffff } );
+const material = new THREE.MeshNormalMaterial( { side: THREE.DoubleSide, flatShading: true } );
 
-function init() {
-	
-	scene = new THREE.Scene();
+const s = new ConstantSpline();
+const random = () => new THREE.Vector3( .5 - Math.random(), .5 - Math.random(), .5 - Math.random() ).multiplyScalar( ( .5 - Math.random() ) * 80 );
 
-	camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, .01, 100 );
-	camera.position.z = 20;
-	camera.target = new THREE.Vector3();
+let mesh = null;
+let lines = [];
 
-	scene.fog = new THREE.Fog( 0, 0, 100 );
-
-	scene.add( camera );
-
-	renderer = new THREE.WebGLRenderer( { antialias: true } );
-	renderer.setSize( window.innerWidth, window.innerHeight );
-
-	container = renderer.domElement;
-	document.body.appendChild( container );
-
-	material = new THREE.LineBasicMaterial( { color: 0xffffff, linewidth: 4, opacity: .8, transparent: true, blending: THREE.AdditiveBlending } );
-	dotMaterial = new THREE.MeshBasicMaterial( { 
-		color: 0xffffff
-	} );
-	
-	lineMaterial = new THREE.LineBasicMaterial( { 
-    	color: 0xffffff,
-    	linewidth: 4
-    } );
-
-	render();
-	
-	createSurface();
-
-}
-
-function addDot( p, s ) {
-
-	if( s === undefined ) s = 1;
-
-	var geometry = new THREE.IcosahedronGeometry( 0.1, 2 );
-	var mesh = new THREE.Mesh( geometry, dotMaterial );
-	mesh.position.copy( p );
-	mesh.scale.set( s, s, s );
-	scene.add( mesh );
-
-	return mesh;
-
-	dots.push( p.clone() );
-
-
-}
-
+// a surface between two curves: each row is a curve in between, as points evenly spaced along it
 function createSurface() {
 
-	if( mesh ) {
+	if ( mesh ) {
+
 		scene.remove( mesh );
 		mesh.geometry.dispose();
-		mesh = null;
+
 	}
 
-	lines.forEach( function( l ) {
+	lines.forEach( function ( l ) {
+
 		scene.remove( l );
 		l.geometry.dispose();
+
 	} );
 	lines = [];
 
-	var p10, p11, p12, p13,
-		p20, p21, p22, p23;
+	const first = [ random(), random(), random(), random() ];
+	const second = [ random(), random(), random(), random() ];
 
-	p10 = new THREE.Vector3( .5 - Math.random(), .5 - Math.random(), .5 - Math.random() );
-	p11 = new THREE.Vector3( .5 - Math.random(), .5 - Math.random(), .5 - Math.random() );
-	p12 = new THREE.Vector3( .5 - Math.random(), .5 - Math.random(), .5 - Math.random() );
-	p13 = new THREE.Vector3( .5 - Math.random(), .5 - Math.random(), .5 - Math.random() );
+	const steps = 30, segments = 60;
+	const positions = [];
 
-	p10.multiplyScalar( ( .5 - Math.random() ) * 80 );
-	p11.multiplyScalar( ( .5 - Math.random() ) * 80 );
-	p12.multiplyScalar( ( .5 - Math.random() ) * 80 );
-	p13.multiplyScalar( ( .5 - Math.random() ) * 80 );
+	for ( let i = 0; i < steps; i ++ ) {
 
-	p20 = new THREE.Vector3( .5 - Math.random(), .5 - Math.random(), .5 - Math.random() );
-	p21 = new THREE.Vector3( .5 - Math.random(), .5 - Math.random(), .5 - Math.random() );
-	p22 = new THREE.Vector3( .5 - Math.random(), .5 - Math.random(), .5 - Math.random() );
-	p23 = new THREE.Vector3( .5 - Math.random(), .5 - Math.random(), .5 - Math.random() );
+		const t = i / steps;
 
-	p20.multiplyScalar( ( .5 - Math.random() ) * 80 );
-	p21.multiplyScalar( ( .5 - Math.random() ) * 80 );
-	p22.multiplyScalar( ( .5 - Math.random() ) * 80 );
-	p23.multiplyScalar( ( .5 - Math.random() ) * 80 );
+		s.p0.lerpVectors( first[ 0 ], second[ 0 ], t );
+		s.p1.lerpVectors( first[ 1 ], second[ 1 ], t );
+		s.p2.lerpVectors( first[ 2 ], second[ 2 ], t );
+		s.p3.lerpVectors( first[ 3 ], second[ 3 ], t );
 
-	var tmp = new THREE.Vector3();
-
-	var steps = 30, segments = 60;
-
-	var planeGeometry = new THREE.PlaneGeometry( 1, 1, segments, steps -1  );
-	var c = 0;
-
-	for( var i = 0; i < steps; i++ ) {
-
-		var t = i / steps;
-
-		s.p0.copy( p10 );
-		s.p0.multiplyScalar( 1 - t );
-		tmp.copy( p20 );
-		tmp.multiplyScalar( t );
-		s.p0.add( tmp );
-
-		s.p1.copy( p11 );
-		s.p1.multiplyScalar( 1 - t );
-		tmp.copy( p21 );
-		tmp.multiplyScalar( t );
-		s.p1.add( tmp );
-		
-		s.p2.copy( p12 );
-		s.p2.multiplyScalar( 1 - t );
-		tmp.copy( p22 );
-		tmp.multiplyScalar( t );
-		s.p2.add( tmp );
-		
-		s.p3.copy( p13 );
-		s.p3.multiplyScalar( 1 - t );
-		tmp.copy( p23 );
-		tmp.multiplyScalar( t );
-		s.p3.add( tmp );
-		
-		s.p0.z = -10; s.p3.z = 10;
+		s.p0.z = - 10; s.p3.z = 10;
 		s.p0.x = s.p1.x = s.p2.x = s.p3.x = ( i - .5 * steps ) * 20 / steps;
 
-		//addDot( s.p1 );
-		//addDot( s.p2 );
-
-		s.numSteps = segments - 1; 
 		s.calculate();
-		s.reticulate( { steps: segments });
+		s.reticulate( { steps: segments } );
 
-		var geometry = new THREE.Geometry();
-	    
-	    var line = new THREE.Line( geometry, material );
-
-		for( var j = 0; j < s.lPoints.length - 1; j++ ) {
-		
-			var from = s.lPoints[ j ],
-				to = s.lPoints[ j + 1 ];
-			geometry.vertices.push( from.clone() );
-		    geometry.vertices.push( to.clone() );
-
-		    //addDot( from );
-		}
-
-	    var line = new THREE.Line( geometry, lineMaterial );
+		const line = new THREE.Line( new THREE.BufferGeometry().setFromPoints( s.lPoints ), lineMaterial );
 		scene.add( line );
 		lines.push( line );
 
-	    for( var j = 0; j < s.lPoints.length; j++ ) {
-	    	planeGeometry.vertices[ c ].copy( s.lPoints[ j ] );
-	    	c++;
-	    }
+		for ( const p of s.lPoints ) positions.push( p.x, p.y, p.z );
 
 	}
 
-	planeGeometry.computeFaceNormals();
-	planeGeometry.computeVertexNormals();
+	// a plane with a vertex for every point
+	const geometry = new THREE.PlaneGeometry( 1, 1, segments, steps - 1 );
+	geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( positions, 3 ) );
+	geometry.computeVertexNormals();
 
-	var material = new THREE.MeshNormalMaterial( { 
-		side: THREE.DoubleSide, 
-		wireframe: false, 
-		shading: THREE.FlatShading 
-	} ) ;
-
-	mesh = new THREE.Mesh( 
-		planeGeometry, 
-		material
-	);
+	mesh = new THREE.Mesh( geometry, material );
 	scene.add( mesh );
 
 }
 
-var isTap = false, tapX, tapY;
+let isTap = false, tapX, tapY;
 
-window.addEventListener( 'touchstart', function( e ) {
+window.addEventListener( 'touchstart', function ( e ) {
 
-	isTap = e.touches.length == 1;
+	isTap = e.touches.length === 1;
 	tapX = e.touches[ 0 ].clientX;
 	tapY = e.touches[ 0 ].clientY;
 
 } );
 
-window.addEventListener( 'touchmove', function( e ) {
+window.addEventListener( 'touchmove', function ( e ) {
 
-	if( Math.abs( e.touches[ 0 ].clientX - tapX ) > 10 || Math.abs( e.touches[ 0 ].clientY - tapY ) > 10 ) isTap = false;
+	if ( Math.abs( e.touches[ 0 ].clientX - tapX ) > 10 || Math.abs( e.touches[ 0 ].clientY - tapY ) > 10 ) isTap = false;
 
 } );
 
-window.addEventListener( 'touchend', function( e ) {
+window.addEventListener( 'touchend', function () {
 
-	if( isTap ) createSurface();
+	if ( isTap ) createSurface();
 	isTap = false;
 
 } );
 
-window.addEventListener( 'keydown', function( e ) {
+window.addEventListener( 'keydown', function ( e ) {
 
-	if( e.keyCode == 32 ) {
-		createSurface();
-	}
+	if ( e.code === 'Space' ) createSurface();
+
+} );
+
+window.addEventListener( 'resize', function () {
+
+	renderer.setSize( window.innerWidth, window.innerHeight );
+	camera.aspect = window.innerWidth / window.innerHeight;
+	camera.updateProjectionMatrix();
 
 } );
 
 function render() {
 
 	requestAnimationFrame( render );
+	controls.update();
 	renderer.render( scene, camera );
 
 }
 
-function updateCamera() {
-
-	if( !isInit ) initEvents();
-
-	if( nfov < 10 ) nfov = 10;
-	if( nfov > 100 ) nfov = 100;
-
-	lon += ( nlon - lon ) * .2;
-	lat += ( nlat - lat ) * .2;
-	fov += ( nfov - fov ) * .2;
-
-	camera.projectionMatrix.makePerspective( fov, window.innerWidth / window.innerHeight, camera.near, camera.far );
-	
-	lat = Math.max( - 85, Math.min( 85, lat ) );
-	phi = ( 90 - lat ) * Math.PI / 180;
-	theta = lon * Math.PI / 180;
-
-	var d = fov;
-	camera.position.x = d * Math.sin( phi ) * Math.cos( theta );
-	camera.position.y = d * Math.cos( phi );
-	camera.position.z = d * Math.sin( phi ) * Math.sin( theta );
-
-	camera.lookAt( scene.position );
-
-}
-
+createSurface();
+render();
 </script>
-<script src="js/scripts.js"></script>
+</body>
+</html>

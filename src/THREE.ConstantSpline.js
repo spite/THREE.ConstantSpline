@@ -1,174 +1,159 @@
-THREE.ConstantSpline = function() {
+import { Vector3 } from 'three';
 
-	this.p0 = new THREE.Vector3();
-	this.p1 = new THREE.Vector3();
-	this.p2 = new THREE.Vector3();
-	this.p3 = new THREE.Vector3();
+const _delta = new Vector3();
+const _offset = new Vector3();
 
-	this.tmp = new THREE.Vector3();
-	this.res = new THREE.Vector3();
-	this.o = new THREE.Vector3();
+class ConstantSpline {
 
-	this.points = [];
-	this.lPoints = [];
-	this.steps = [];
-	
-	this.inc = .01;
-	this.d = 0;
+	constructor( p0 = new Vector3(), p1 = new Vector3(), p2 = new Vector3(), p3 = new Vector3() ) {
 
-	this.distancesNeedUpdate = false;
+		this.p0 = p0;
+		this.p1 = p1;
+		this.p2 = p2;
+		this.p3 = p3;
 
-};
+		// how finely the curve is sampled
+		this.inc = .01;
 
-THREE.ConstantSpline.prototype.calculate = function() {
+		this.points = [];
+		this.lPoints = [];
 
-	this.d = 0;
-	this.points = [];
+		// the length of the curve, and the length up to each sample
+		this.d = 0;
+		this.lengths = [];
 
-	this.o.copy( this.p0 );
-
-	for( var j = 0; j <= 1; j += this.inc ) {
-		
-		var i = ( 1 - j );
-		var ii = i * i;
-		var iii = ii * i;
-		var jj = j * j;
-		var jjj = jj * j;
-		
-		this.res.set( 0, 0, 0 );
-		
-		this.tmp.copy( this.p0 );
-		this.tmp.multiplyScalar( iii );		
-		this.res.add( this.tmp );
-
-		this.tmp.copy( this.p1 );
-		this.tmp.multiplyScalar( 3 * j * ii );
-		this.res.add( this.tmp );
-
-		this.tmp.copy( this.p2 );
-		this.tmp.multiplyScalar( 3 * jj * i );
-		this.res.add( this.tmp );
-
-		this.tmp.copy( this.p3 );
-		this.tmp.multiplyScalar( jjj );
-		this.res.add( this.tmp );
-
-		this.points.push( this.res.clone() );
-		
-	}
-
-	this.points.push( this.p3.clone() );
-
-	this.distancesNeedUpdate = true;
-
-};
-
-THREE.ConstantSpline.prototype.calculateDistances = function() {
-
-	this.steps = [];
-	this.d = 0;
-
-	var from, to, td = 0;
-
-	for( var j = 0; j < this.points.length - 1; j++ ) {
-
-		this.points[ j ].distance = td;
-		this.points[ j ].ac = this.d;
-
-		from = this.points[ j ],
-		to = this.points[ j + 1 ],
-		td = to.distanceTo( from );
-
-		this.d += td;
+		this.distancesNeedUpdate = false;
 
 	}
 
-	this.points[ this.points.length - 1 ].distance = td;
-	this.points[ this.points.length - 1 ].ac = this.d;
+	// samples the curve from the control points
+	calculate() {
 
-	this.distancesNeedUpdate = false;
+		const n = Math.max( 1, Math.round( 1 / this.inc ) );
 
-};
+		this.points = [];
 
-THREE.ConstantSpline.prototype.reticulate = function( settings ) {
+		for ( let k = 0; k <= n; k ++ ) {
 
-	if( this.distancesNeedUpdate ) {
-		this.calculateDistances();
-	}
+			const j = k / n;
+			const i = 1 - j;
 
-	this.lPoints = [];
+			this.points.push( new Vector3()
+				.addScaledVector( this.p0, i * i * i )
+				.addScaledVector( this.p1, 3 * j * i * i )
+				.addScaledVector( this.p2, 3 * j * j * i )
+				.addScaledVector( this.p3, j * j * j ) );
 
-	var steps, distancePerStep;
-
-	if( settings.distancePerStep ) {
-		distancePerStep = settings.distancePerStep;
-	} else if( settings.steps ) {
-		steps = settings.steps;
-		distancePerStep = this.d / steps;
-	}
-
-	var d = 0, j;
-
-	var end = this.points[ this.points.length - 1 ];
-
-	var current = new THREE.Vector3();
-	current.copy( this.points[ 0 ].clone() );
-	this.lPoints.push( current.clone() );
-
-	function splitSegment( a, b, l ) {
-
-		var t = b.clone();
-		var d = 0;
-		t.sub( a );
-		var rd = t.length();
-		t.normalize();
-		t.multiplyScalar( distancePerStep );
-		var s = Math.floor( rd / distancePerStep );
-		for( var j = 0; j < s; j++ ) {
-			a.add( t );
-			l.push( a.clone() );
-			d += distancePerStep;
 		}
-		return d;
+
+		this.distancesNeedUpdate = true;
+
+		return this;
+
 	}
 
-	if( steps ) {
+	calculateDistances() {
 
-		// steps + 1 points, evenly spaced along the sampled curve
-		var from, to, at;
+		this.d = 0;
+		this.lengths = [ 0 ];
 
-		for( j = 1; j < this.points.length; j++ ) {
+		for ( let j = 1; j < this.points.length; j ++ ) {
 
-			from = this.points[ j - 1 ];
-			to = this.points[ j ];
+			this.d += this.points[ j ].distanceTo( this.points[ j - 1 ] );
+			this.lengths.push( this.d );
 
-			while( this.lPoints.length < steps && to.ac >= this.lPoints.length * distancePerStep ) {
+		}
 
-				at = this.lPoints.length * distancePerStep;
-				this.lPoints.push( from.clone().lerp( to, to.ac > from.ac ? ( at - from.ac ) / ( to.ac - from.ac ) : 0 ) );
+		this.distancesNeedUpdate = false;
+
+		return this;
+
+	}
+
+	// fills lPoints: with steps, that many segments of the same length along the curve.
+	// With distancePerStep, points that are that far from each other in a straight line, and a shorter last segment
+	reticulate( settings = {} ) {
+
+		const { steps, distancePerStep } = settings;
+
+		if ( ! ( distancePerStep > 0 ) && ! ( steps >= 1 ) ) throw new TypeError( 'THREE.ConstantSpline: reticulate() needs steps or distancePerStep' );
+
+		if ( this.points.length === 0 ) this.calculate();
+		if ( this.distancesNeedUpdate ) this.calculateDistances();
+
+		const points = this.points;
+		const end = points[ points.length - 1 ];
+
+		this.lPoints = [ points[ 0 ].clone() ];
+
+		if ( distancePerStep > 0 ) {
+
+			const current = points[ 0 ].clone();
+
+			for ( let j = 1; j < points.length; j ++ ) {
+
+				const from = points[ j - 1 ];
+				_delta.subVectors( points[ j ], from );
+
+				// where this piece of the curve leaves the sphere around the last point, as many times as it does
+				let t = solve( from, _delta, current, distancePerStep, 0 );
+
+				while ( t !== null ) {
+
+					current.copy( from ).addScaledVector( _delta, t );
+					this.lPoints.push( current.clone() );
+					t = solve( from, _delta, current, distancePerStep, t );
+
+				}
+
+			}
+
+			// a last step that landed on the end is the end
+			if ( this.lPoints.length > 1 && current.distanceTo( end ) < distancePerStep * 1e-6 ) this.lPoints.pop();
+
+		} else {
+
+			const count = Math.floor( steps );
+			let j = 1;
+
+			for ( let k = 1; k < count; k ++ ) {
+
+				const at = k * this.d / count;
+
+				while ( j < points.length - 1 && this.lengths[ j ] < at ) j ++;
+
+				const length = this.lengths[ j ] - this.lengths[ j - 1 ];
+
+				this.lPoints.push( points[ j - 1 ].clone().lerp( points[ j ], length > 0 ? ( at - this.lengths[ j - 1 ] ) / length : 0 ) );
 
 			}
 
 		}
 
-	} else {
+		this.lPoints.push( end.clone() );
 
-		for( j = 0; j < this.points.length; j++ ) {
-
-			if( this.points[ j ].ac - d > distancePerStep ) {
-
-				d += splitSegment( current, this.points[ j ], this.lPoints );
-
-			}
-
-		}
-
-		// drop a last step that landed on the end point
-		if( this.lPoints.length > 1 && current.distanceTo( end ) < distancePerStep * 1e-6 ) this.lPoints.pop();
+		return this.lPoints;
 
 	}
 
-	this.lPoints.push( end.clone() );
+}
 
+// the t in ( after, 1 ] where from + t * delta leaves the sphere of that radius around the centre
+function solve( from, delta, centre, radius, after ) {
 
-};
+	_offset.subVectors( from, centre );
+
+	const a = delta.lengthSq();
+	const b = 2 * _offset.dot( delta );
+	const c = _offset.lengthSq() - radius * radius;
+	const discriminant = b * b - 4 * a * c;
+
+	if ( a === 0 || discriminant < 0 ) return null;
+
+	const t = ( - b + Math.sqrt( discriminant ) ) / ( 2 * a );
+
+	return t > after + 1e-9 && t <= 1 ? t : null;
+
+}
+
+export { ConstantSpline };
