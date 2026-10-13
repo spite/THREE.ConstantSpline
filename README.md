@@ -3,20 +3,29 @@ THREE.ConstantSpline.js
 
 Evenly spaced points along a cubic Bézier curve, for [three.js](https://threejs.org). Give it 4 control points and either a number of steps or a fixed step distance, and it returns a set of points that cover the curve at a constant rate.
 
+#### Demos ####
+- **[Lines](https://spite.github.io/THREE.ConstantSpline/demos/lines.html)**: curves drawn with points at a constant distance
+- **[Surfaces](https://spite.github.io/THREE.ConstantSpline/demos/surface.html)**: the same points used to build a surface
+
 ![Image](https://raw.githubusercontent.com/spite/THREE.ConstantSpline/master/snapshot.png)
 
-Demos are here:
-* [Lines](https://spite.github.io/THREE.ConstantSpline/demos/lines.html)
-* [Surfaces](https://spite.github.io/THREE.ConstantSpline/demos/surface.html)
+#### 2026 update ####
+**Disclaimer:** this library is from 2014, and three.js can already do what it does. Use three.js for anything new
 
-> **Before you use this:** three.js can already do it. [`CubicBezierCurve3`](https://threejs.org/docs/pages/CubicBezierCurve3.html) has been part of three.js since r45 (2011), and [`getSpacedPoints()`](https://threejs.org/docs/pages/Curve.html#getSpacedPoints) gives evenly spaced points on it, or on any other curve:
->
-> ```js
-> const curve = new THREE.CubicBezierCurve3( p0, p1, p2, p3 );
-> const points = curve.getSpacedPoints( 500 );
-> ```
->
-> Use that for anything new. This library is from 2014 and was written against three.js r58: it expects a global `THREE`, which current three.js no longer provides. The one thing it does that the built-in doesn't is `distancePerStep`, which places points an exact straight-line distance apart.
+[`CubicBezierCurve3`](https://threejs.org/docs/pages/CubicBezierCurve3.html) has been part of three.js since r45 (2011), and [`getSpacedPoints()`](https://threejs.org/docs/pages/Curve.html#getSpacedPoints) gives evenly spaced points on it, or on any other curve:
+
+```js
+const curve = new THREE.CubicBezierCurve3( p0, p1, p2, p3 );
+const points = curve.getSpacedPoints( 500 );
+```
+
+The one thing this library does that the built-in doesn't is `distancePerStep`, which places points an exact straight-line distance apart.
+
+It has not been rewritten for current three.js: it was written against r58 and expects a global `THREE`, which three.js no longer provides. The demos run on the version of three.js that is in the repository. What changed from the 2014 version:
+
+- `steps` returns exactly `steps + 1` points, evenly spaced along the curve
+- with `distancePerStep`, the end of the curve is not there twice when the last step lands on it
+- the demos use the library in `src`, there was a second copy of it for them
 
 How to use
 ----------
